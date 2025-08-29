@@ -9,7 +9,9 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "bot": "ts-node src/telegramBotLauncher.ts",
+    "bot:dev": "nodemon src/telegramBotLauncher.ts"
   },
   "keywords": [
     "verbex",
@@ -17,7 +19,8 @@
     "blockchain",
     "0xgasless",
     "groq",
-    "voice-chat"
+    "voice-chat",
+    "telegram-bot"
   ],
   "author": "Verbex Team",
   "license": "MIT",
@@ -34,6 +37,7 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.16.3",
     "socket.io": "^4.7.4",
+    "telegraf": "^4.15.6",
     "viem": "^2.0.0"
   },
   "devDependencies": {

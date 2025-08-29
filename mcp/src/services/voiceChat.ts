@@ -1,5 +1,8 @@
 import { Groq } from 'groq-sdk';
 import { Readable } from 'stream';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 class VoiceChatService {
 	private groq!: Groq;
@@ -27,21 +30,26 @@ class VoiceChatService {
 		}
 
 		try {
-			// Convert Buffer to Readable stream for Groq SDK
-			const audioStream = new Readable();
-			audioStream.push(audioData);
-			audioStream.push(null); // End the stream
+			// Persist incoming audio to a temporary file (Expo records m4a by default)
+			const tempDir = os.tmpdir();
+			const tempFilePath = path.join(tempDir, `verbex-voice-${Date.now()}.m4a`);
+			await fs.promises.writeFile(tempFilePath, audioData);
 
-			// Use Groq's transcription API - pass the buffer directly
+			// Stream the file to Groq STT
+			const fileStream = fs.createReadStream(tempFilePath);
 			const transcription = await this.groq.audio.transcriptions.create({
-				file: audioData as any, // Cast to any to bypass type checking for now
-				model: 'whisper-large-v3-turbo', // Fast and cost-effective
+				file: fileStream as any,
+				model: 'whisper-large-v3-turbo',
 				language: language,
-				response_format: 'text', // Simple text output
-				temperature: 0.0 // Deterministic output
+				response_format: 'text',
+				temperature: 0.0,
 			});
 
-			return transcription.text || '';
+			// Cleanup temp file
+			fileStream.close();
+			fs.promises.unlink(tempFilePath).catch(() => {});
+
+			return (transcription as any)?.text || '';
 		} catch (error: any) {
 			console.error('STT Error:', error);
 			throw new Error(`Speech-to-Text failed: ${error.message}`);

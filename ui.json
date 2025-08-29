@@ -1,0 +1,280 @@
+{
+  "meta": {
+    "name": "Verbex DeFi Assistant UI",
+    "version": "1.0.0",
+    "description": "Center-aligned funky DeFi brand UI with landing hero, chat page, and voice-only orb page.",
+    "brandTone": ["bold", "playful", "confident", "techy"],
+    "accessibility": { "contrast": "WCAG AA or better", "focusVisible": true }
+  },
+  "theme": {
+    "colors": {
+      "brandPlum": { "hex": "#2D1B1A", "usage": ["headings", "ribbons", "primary text on light"], "contrastOnCream": "7.6:1" },
+      "neonLime": { "hex": "#C7F25B", "usage": ["sticky notes", "badges emphasis", "CTA hover underline"], "contrastOnPlum": "4.7:1" },
+      "cream": { "hex": "#F7F3EA", "usage": ["page background", "card background subtle"], "note": "warm, off-white" },
+      "ink": { "hex": "#0E0D0C", "usage": ["body text", "icons on lime"], "contrastOnCream": "14.2:1" },
+      "electricBlue": { "hex": "#2B59FF", "usage": ["accents", "links", "voice orb gradient stop", "arrows"], "contrastOnCream": "7.8:1" }
+    },
+    "typography": {
+      "headingFamily": { "name": "Bebas Neue", "fallback": "Impact, system-ui, sans-serif", "weights": [400, 700] },
+      "bodyFamily": { "name": "Inter", "fallback": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif", "weights": [400, 500, 600] },
+      "scalesPx": {
+        "display": 72,
+        "h1": 56,
+        "h2": 40,
+        "h3": 28,
+        "body": 16,
+        "small": 14
+      },
+      "lineHeights": { "tight": 1.1, "snug": 1.25, "normal": 1.5, "relaxed": 1.6 },
+      "letterSpacing": { "display": 0, "headings": 0, "body": 0 }
+    },
+    "radiiPx": { "xs": 8, "sm": 12, "md": 16, "lg": 24, "xl": 32, "pill": 999 },
+    "shadows": {
+      "card": "0 10px 30px rgba(0,0,0,0.10)",
+      "elevated": "0 18px 60px rgba(0,0,0,0.18)",
+      "softGlowBlue": "0 0 40px rgba(43,89,255,0.35)"
+    },
+    "spacingPx": { "xxs": 4, "xs": 8, "sm": 12, "md": 16, "lg": 24, "xl": 32, "xxl": 48, "heroGap": 24, "sectionGap": 72 },
+    "motion": {
+      "durationsMs": { "fast": 160, "normal": 260, "slow": 420, "float": 3000, "pulse": 1800 },
+      "easing": { "inOut": "cubic-bezier(0.4, 0, 0.2, 1)", "outExpo": "cubic-bezier(0.16, 1, 0.3, 1)" }
+    }
+  },
+  "layout": {
+    "alignment": "center",
+    "container": {
+      "maxWidthPx": { "sm": 640, "md": 768, "lg": 1024, "xl": 1200 },
+      "paddingX": { "mobilePx": 16, "desktopPx": 24 }
+    },
+    "breakpointsPx": { "sm": 640, "md": 768, "lg": 1024, "xl": 1280 },
+    "grid": { "gapPx": 16, "gapLgPx": 24 }
+  },
+  "assets": {
+    "deckImages": [
+      { "id": "slide1", "url": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004847-NRGfVBlfV9GUiEsILWVZ1pr03MaZfz.png", "alt": "Verbex deck slide 1 - Problem Statement" },
+      { "id": "slide2", "url": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004827-YEB5GB6cClupq6bXpCS0cyMDPfHwpD.png", "alt": "Verbex deck slide 2 - Our Solution" },
+      { "id": "slide3", "url": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-08-29%20at%2023.53.12-MLHDGcMwhbBRfKculTXC4hcN7EH7Ff.jpeg", "alt": "Verbex deck slide 3 - Title" },
+      { "id": "slide4", "url": "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004838-GI6fD8TWdrrlFad67IIqcuHQtKgFpK.png", "alt": "Verbex deck slide 4 - Product & Technology" }
+    ]
+  },
+  "components": {
+    "Buttons": {
+      "primary": {
+        "bg": "brandPlum",
+        "text": "cream",
+        "hover": { "bg": "ink", "shadow": "softGlowBlue" },
+        "font": "bodyFamily",
+        "size": { "heightPx": 48, "pxPx": 22, "radiusPx": 28 }
+      },
+      "secondary": {
+        "bg": "neonLime",
+        "text": "ink",
+        "hover": { "bg": "neonLime", "underline": true },
+        "size": { "heightPx": 44, "pxPx": 18, "radiusPx": 24 }
+      }
+    },
+    "StickyNote": {
+      "bg": "neonLime",
+      "text": "ink",
+      "radiusPx": 12,
+      "shadow": "card",
+      "paddingPx": { "y": 8, "x": 12 },
+      "tiltDegrees": -4
+    },
+    "CurvyArrow": {
+      "stroke": "electricBlue",
+      "strokeWidthPx": 4,
+      "cap": "round",
+      "dasharray": "6 8",
+      "glow": "softGlowBlue",
+      "paths": {
+        "hero": "M 10 80 C 90 10, 180 100, 260 40",
+        "gridConnector": "M 10 20 C 60 -10, 120 60, 180 20"
+      },
+      "animation": { "type": "dashoffset-loop", "durationMs": 1800, "easing": "inOut" }
+    },
+    "ChainBadge": {
+      "base": {
+        "radiusPx": 999,
+        "paddingPx": { "y": 8, "x": 14 },
+        "font": "bodyFamily",
+        "sizePx": 14
+      },
+      "variants": {
+        "avalanche": { "bg": "brandPlum", "text": "cream", "emphasis": true, "icon": "triangle" },
+        "stellar": { "bg": "cream", "text": "ink", "border": "brandPlum" },
+        "sonic": { "bg": "cream", "text": "ink", "border": "electricBlue" }
+      }
+    },
+    "Card": {
+      "bg": "cream",
+      "radiusPx": 24,
+      "shadow": "card",
+      "paddingPx": 20,
+      "borderPx": 0
+    },
+    "ChatBubble": {
+      "user": { "bg": "brandPlum", "text": "cream" },
+      "assistant": { "bg": "#ffffff", "text": "ink", "border": "rgba(0,0,0,0.08)" },
+      "radiusPx": 16,
+      "gapPx": 12
+    },
+    "VoiceOrb": {
+      "diameterPx": { "mobile": 220, "desktop": 320 },
+      "gradient": { "stops": ["electricBlue", "brandPlum"], "angleDeg": 130 },
+      "ring": { "baseOpacity": 0.3, "maxOpacity": 0.8, "thicknessPx": 8 },
+      "audioReactive": { "scaleMin": 0.95, "scaleMax": 1.15, "smoothing": 0.8 },
+      "idleFloat": { "amplitudePx": 8, "durationMs": 3000 },
+      "micButton": { "sizePx": 56, "bg": "neonLime", "iconColor": "ink", "radiusPx": 28 }
+    }
+  },
+  "pages": {
+    "landing": {
+      "route": "/",
+      "alignment": "center",
+      "sections": {
+        "hero": {
+          "container": { "maxWidthPx": 1200, "paddingTopPx": 64, "paddingBottomPx": 40 },
+          "headline": {
+            "text": "Verbex — the future of DeFi",
+            "font": "headingFamily",
+            "sizePx": 56,
+            "weight": 700,
+            "color": "brandPlum",
+            "lineHeight": 1.05,
+            "align": "center"
+          },
+          "subcopy": {
+            "text": "No more manual hustle. Describe intent, Verbex plans and executes on-chain.",
+            "font": "bodyFamily",
+            "sizePx": 18,
+            "color": "ink",
+            "align": "center",
+            "maxWidthPx": 720
+          },
+          "ctaRow": {
+            "align": "center",
+            "gapPx": 14,
+            "buttons": [
+              { "variant": "primary", "label": "Make it work right now", "href": "/chat" },
+              { "variant": "secondary", "label": "Voice Mode", "href": "/voice" }
+            ]
+          },
+          "floatingSticky": {
+            "component": "StickyNote",
+            "text": "Bring your granny onchain",
+            "attachTo": "headline-right",
+            "offsetPx": { "x": 22, "y": -12 },
+            "zIndex": 10
+          },
+          "arrow": {
+            "component": "CurvyArrow",
+            "presetPath": "hero",
+            "from": "left-of-sticky",
+            "to": "sticky",
+            "boundsPx": { "width": 280, "height": 120 },
+            "positioning": { "relativeTo": "headline", "offsetPx": { "x": -160, "y": 10 } }
+          },
+          "chains": {
+            "label": "Runs on",
+            "badges": [
+              { "variant": "avalanche", "text": "Avalanche" },
+              { "variant": "stellar", "text": "Stellar" },
+              { "variant": "sonic", "text": "Sonic" }
+            ],
+            "gapPx": 10
+          },
+          "featureImage": {
+            "assetId": "slide1",
+            "style": {
+              "card": { "radiusPx": 24, "shadow": "elevated", "paddingPx": 0, "borderPx": 0 },
+              "fit": "cover",
+              "heightPx": { "mobile": 260, "desktop": 420 }
+            },
+            "labelSticky": { "text": "Feature image", "component": "StickyNote", "offsetPx": { "x": -10, "y": 10 } }
+          },
+          "background": {
+            "blobs": [
+              { "color": "electricBlue", "opacity": 0.08, "sizePx": 360, "position": "top-right", "blurPx": 60 },
+              { "color": "brandPlum", "opacity": 0.05, "sizePx": 420, "position": "bottom-left", "blurPx": 80 }
+            ]
+          }
+        },
+        "imageGrid": {
+          "title": "From intent to execution",
+          "subtitle": "See it flow — plan, route, execute, track.",
+          "grid": {
+            "columns": { "mobile": 1, "md": 2, "lg": 2 },
+            "gapPx": 24,
+            "items": [
+              { "id": "g1", "assetId": "slide2", "caption": "Plan", "cardStyle": "Card" },
+              { "id": "g2", "assetId": "slide4", "caption": "Route", "cardStyle": "Card" },
+              { "id": "g3", "assetId": "slide1", "caption": "Execute", "cardStyle": "Card" },
+              { "id": "g4", "assetId": "slide3", "caption": "Track", "cardStyle": "Card" }
+            ]
+          },
+          "connectors": [
+            { "fromId": "g1", "toId": "g2", "component": "CurvyArrow", "presetPath": "gridConnector" },
+            { "fromId": "g2", "toId": "g3", "component": "CurvyArrow", "presetPath": "gridConnector" },
+            { "fromId": "g3", "toId": "g4", "component": "CurvyArrow", "presetPath": "gridConnector" }
+          ],
+          "centerAligned": true
+        }
+      }
+    },
+    "chat": {
+      "route": "/chat",
+      "voiceEnabled": false,
+      "header": { "title": "Chat with Verbex", "sub": "Type your DeFi intent. No manual hustle." },
+      "layout": {
+        "maxWidthPx": 900,
+        "stackGapPx": 16,
+        "center": true
+      },
+      "input": {
+        "type": "textarea",
+        "rows": 1,
+        "placeholder": "e.g., Swap 100 AVAX to USDC, then stake the rest",
+        "sendButtonLabel": "Send"
+      },
+      "ctaBar": {
+        "rightButton": { "label": "Voice Mode", "href": "/voice", "variant": "secondary" }
+      },
+      "bubbles": { "component": "ChatBubble", "timestamps": true, "avatars": true }
+    },
+    "voice": {
+      "route": "/voice",
+      "textInputs": "none",
+      "layout": {
+        "fullscreen": true,
+        "center": true,
+        "bg": "cream",
+        "maxWidthPx": 980
+      },
+      "orb": { "component": "VoiceOrb", "micToggle": true, "pulseOnSpeech": true },
+      "tips": {
+        "stickyNote": { "text": "Tap to talk. Verbex executes on-chain.", "show": true, "offsetPx": { "x": 0, "y": 16 } }
+      }
+    }
+  },
+  "animations": {
+    "floatSticky": { "translateYPx": [0, -6, 0], "durationMs": 3000, "easing": "inOut", "loop": true },
+    "arrowDash": { "durationMs": 1800, "easing": "inOut", "loop": true },
+    "cardHover": { "scale": [1, 1.02], "shadow": "elevated", "durationMs": 200 }
+  },
+  "a11y": {
+    "imageAltsRequired": true,
+    "keyboard": { "tabOrder": "logical", "focusRings": true },
+    "aria": {
+      "voiceMicLabel": "Toggle microphone",
+      "sendMessageLabel": "Send message"
+    }
+  },
+  "prompts": {
+    "brandingPrompt": "Design a center-aligned, playful DeFi brand interface using exactly 5 tokens: brandPlum #2D1B1A, neonLime #C7F25B, cream #F7F3EA, ink #0E0D0C, electricBlue #2B59FF. Headings use Bebas Neue, body uses Inter. Avoid gradients except the voice orb (electricBlue→brandPlum). Use rounded 24px cards, sticky-note lime labels, and curvy dashed electric blue arrows with glow.",
+    "landingPrompt": "Create a hero with the headline 'Verbex — the future of DeFi', subcopy 'No more manual hustle...', primary CTA 'Make it work right now' (brandPlum), secondary 'Voice Mode' (neonLime). Add a floating neon-lime sticky reading 'Bring your granny onchain' attached to the headline’s right side with a curvy dashed electric-blue arrow pointing to it. Center a card containing the image https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004847-NRGfVBlfV9GUiEsILWVZ1pr03MaZfz.png with 24px radius and elevated shadow. Add chain badges centered: Avalanche (emphasized, plum-on-cream), Stellar, Sonic.",
+    "gridPrompt": "Below the hero, build a center-aligned 2×2 image grid with 24px gaps. Use these images in order: https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004827-YEB5GB6cClupq6bXpCS0cyMDPfHwpD.png, https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004838-GI6fD8TWdrrlFad67IIqcuHQtKgFpK.png, https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-08-30%20004847-NRGfVBlfV9GUiEsILWVZ1pr03MaZfz.png, https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-08-29%20at%2023.53.12-MLHDGcMwhbBRfKculTXC4hcN7EH7Ff.jpeg. Each tile is a card with 24px radius, 'Plan/Route/Execute/Track' captions, and electric-blue curvy dashed arrows connecting 1→2, 2→3, 3→4.",
+    "chatPrompt": "Chat page is text-only (no voice controls). Use center-aligned 900px max width. Verbex assistant bubbles are white on cream with subtle border, user bubbles are brandPlum with cream text. Input is a single-line textarea with Send button. Include a right-aligned secondary button linking to /voice labeled 'Voice Mode'.",
+    "voicePrompt": "Voice page is fullscreen center with only an animated orb: a circular blob using an electricBlue→brandPlum subtle gradient, idle float, and audio-reactive pulsing (scale 0.95–1.15). Add a neon-lime circular mic button overlay (56px) to toggle recording. No text inputs."
+  }
+}

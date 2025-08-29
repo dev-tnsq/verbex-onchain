@@ -1,274 +1,390 @@
-import React, { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  Alert,
-} from 'react-native';
-import { chat, auth } from '../../lib/api';
-import { getToken, saveToken } from '../../lib/auth';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../context/AuthProvider';
+import { api } from '../../lib/api';
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'assistant';
-  timestamp: Date;
-}
+const { width } = Dimensions.get('window');
 
-export default function ChatTab() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+type Message = {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
+
+export default function ChatPage() {
+  const router = useRouter();
+  const { token } = useAuth();
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'assistant',
+      content: 'Hi! I\'m Verbex. Tell me your DeFi intent: "Swap 100 USDC to ETH with best route, then lend 50% to Aave."',
+    },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [sessionId] = useState(`session_${Date.now()}`);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  const sendMessage = async (text?: string) => {
+    const content = (text ?? input).trim();
+    if (!content || !token) return;
 
-  const checkAuth = async () => {
-    try {
-      const token = await getToken();
-      if (token) {
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.log('No auth token found');
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!inputText.trim() || !isAuthenticated) {
-      if (!isAuthenticated) {
-        Alert.alert('Please login first', 'You need to be authenticated to use chat features');
-      }
-      return;
-    }
-
-    const userMessage: Message = {
-      id: `user_${Date.now()}`,
-      text: inputText,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
+    const userMessage: Message = { role: 'user', content };
     setMessages(prev => [...prev, userMessage]);
-    setInputText('');
+    setInput('');
     setIsLoading(true);
 
     try {
-      const response = await chat.sendMessage(inputText, sessionId);
-      const aiResponse = response.data.data.response;
+      const response = await api.post('/chat', {
+        message: content,
+        context: {
+          userPreferences: {
+            voiceEnabled: false,
+            language: 'en',
+            blockchainNetwork: 'avalanche',
+            autoConfirmTransactions: true,
+            spendingLimit: '1000'
+          }
+        }
+      });
 
       const assistantMessage: Message = {
-        id: `assistant_${Date.now()}`,
-        text: aiResponse,
-        sender: 'assistant',
-        timestamp: new Date(),
+        role: 'assistant',
+        content: response.data.response
       };
-
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
-      Alert.alert('Error', 'Failed to send message');
+      console.error('Error sending message:', error);
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.'
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogin = async () => {
-    try {
-      // For demo purposes, create a simple login
-      const response = await auth.signup('demo@verbex.com', 'password123', {
-        voiceEnabled: true,
-        language: 'en',
-        blockchainNetwork: 'avalanche',
-        autoConfirmTransactions: false,
-        spendingLimit: '1000'
-      });
-
-      if (response.data.success) {
-        await saveToken(response.data.data.token);
-        setIsAuthenticated(true);
-        Alert.alert('Success', 'Logged in successfully!');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', 'Login failed');
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
     }
-  };
+  }, [messages]);
+
+  const ChatBubble = ({ role, children }: { role: 'user' | 'assistant'; children: React.ReactNode }) => (
+    <View style={{
+      alignSelf: role === 'user' ? 'flex-end' : 'flex-start',
+      maxWidth: '85%', // ChatBubble max width
+      marginBottom: 12, // ChatBubble.gapPx
+    }}>
+      <View style={{
+        backgroundColor: role === 'user' ? '#2D1B1A' : '#F7F3EA', // ChatBubble.user.bg (brandPlum) : ChatBubble.assistant.bg (cream)
+        borderWidth: role === 'user' ? 0 : 1,
+        borderColor: role === 'user' ? 'transparent' : 'rgba(0,0,0,0.08)', // ChatBubble.assistant.border
+        borderRadius: 16, // ChatBubble.radiusPx
+        paddingHorizontal: 16, // spacingPx.md
+        paddingVertical: 12, // spacingPx.sm
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.10, // shadows.card opacity
+        shadowRadius: 30,
+        elevation: 8
+      }}>
+        <Text style={{
+          fontSize: 16, // typography.scalesPx.body
+          lineHeight: 1.5, // typography.lineHeights.normal
+          color: role === 'user' ? '#F7F3EA' : '#0E0D0C' // ChatBubble.user.text (cream) : ChatBubble.assistant.text (ink)
+        }}>
+          {children}
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Verbex AI Assistant</Text>
-        <Text style={styles.subtitle}>Your Blockchain AI Companion</Text>
-      </View>
-
-      {!isAuthenticated ? (
-        <View style={styles.authContainer}>
-          <Text style={styles.authText}>Please login to start chatting</Text>
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
-          <ScrollView style={styles.messagesContainer} showsVerticalScrollIndicator={false}>
-            {messages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.message,
-                  message.sender === 'user' ? styles.userMessage : styles.assistantMessage,
-                ]}
-              >
-                <Text style={styles.messageText}>{message.text}</Text>
-                <Text style={styles.timestamp}>
-                  {message.timestamp.toLocaleTimeString()}
+    <View style={{ flex: 1, backgroundColor: '#F7F3EA' }}> {/* cream from design spec */}
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={{ 
+          flexDirection: 'row', 
+          flex: 1,
+          maxWidth: 900, // chat.layout.maxWidthPx
+          marginHorizontal: 'auto',
+          gap: 16 // chat.layout.stackGapPx
+        }}>
+          {/* Sidebar - Hidden on mobile */}
+          <View style={{
+            width: 280,
+            backgroundColor: '#F7F3EA', // Card.bg (cream)
+            borderRadius: 24, // Card.radiusPx
+            padding: 20, // Card.paddingPx
+            margin: 16, // spacingPx.md
+            display: width > 768 ? 'flex' : 'none',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.10, // shadows.card opacity
+            shadowRadius: 30,
+            elevation: 8
+          }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{
+                backgroundColor: '#C7F25B', // neonLime from design spec
+                paddingHorizontal: 12, // StickyNote.paddingPx.x
+                paddingVertical: 8, // StickyNote.paddingPx.y
+                borderRadius: 12, // StickyNote.radiusPx
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.10, // shadows.card opacity
+                shadowRadius: 30,
+                elevation: 8,
+                transform: [{ rotate: '-4deg' }] // StickyNote.tiltDegrees
+              }}>
+                <Text style={{ 
+                  fontSize: 14, // typography.scalesPx.small
+                  fontWeight: '600', 
+                  color: '#0E0D0C' // ink from design spec
+                }}>
+                  Sessions
                 </Text>
               </View>
-            ))}
-            {isLoading && (
-              <View style={[styles.message, styles.assistantMessage]}>
-                <Text style={styles.messageText}>Thinking...</Text>
+              <TouchableOpacity style={{
+                borderRadius: 8, // spacingPx.xs
+                borderWidth: 1,
+                borderColor: 'rgba(0,0,0,0.10)', // border-black/10
+                backgroundColor: '#F7F3EA', // Card.bg (cream)
+                paddingHorizontal: 8, // spacingPx.xs
+                paddingVertical: 4 // spacingPx.xxs
+              }}>
+                <Text style={{ fontSize: 12, color: '#0E0D0C' }}>New</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={{ fontSize: 12, opacity: 0.7, marginBottom: 8, color: '#0E0D0C' }}>
+              Demo stores messages in memory.
+            </Text>
+            
+            <View style={{ gap: 8 }}>
+              <View style={{
+                backgroundColor: 'rgba(0,0,0,0.05)', // bg-black/5
+                borderRadius: 8, // spacingPx.xs
+                paddingHorizontal: 8, // spacingPx.xs
+                paddingVertical: 4 // spacingPx.xxs
+              }}>
+                <Text style={{ fontSize: 14, color: '#0E0D0C' }}>Quick Start</Text>
               </View>
-            )}
-          </ScrollView>
-
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Ask me anything about blockchain..."
-              placeholderTextColor="#6b7280"
-              multiline
-              onSubmitEditing={sendMessage}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-              onPress={sendMessage}
-              disabled={!inputText.trim() || isLoading}
-            >
-              <Text style={styles.sendButtonText}>Send</Text>
-            </TouchableOpacity>
+              <View style={{
+                borderRadius: 8, // spacingPx.xs
+                paddingHorizontal: 8, // spacingPx.xs
+                paddingVertical: 4 // spacingPx.xxs
+              }}>
+                <Text style={{ fontSize: 14, color: '#0E0D0C' }}>Yield Scan</Text>
+              </View>
+              <View style={{
+                borderRadius: 8, // spacingPx.xs
+                paddingHorizontal: 8, // spacingPx.xs
+                paddingVertical: 4 // spacingPx.xxs
+              }}>
+                <Text style={{ fontSize: 14, color: '#0E0D0C' }}>Lend & Hedge</Text>
+              </View>
+            </View>
           </View>
-        </>
-      )}
-    </SafeAreaView>
+
+          {/* Chat Section */}
+          <View style={{
+            flex: 1,
+            backgroundColor: '#F7F3EA', // Card.bg (cream)
+            borderRadius: 24, // Card.radiusPx
+            margin: 16, // spacingPx.md
+            overflow: 'hidden',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.10, // shadows.card opacity
+            shadowRadius: 30,
+            elevation: 8
+          }}>
+            {/* Header */}
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottomWidth: 1,
+              borderBottomColor: 'rgba(0,0,0,0.10)', // card shadow opacity
+              paddingHorizontal: 16, // spacingPx.md
+              paddingVertical: 12 // spacingPx.sm
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{
+                  backgroundColor: '#2D1B1A', // brandPlum from design spec
+                  paddingHorizontal: 6, // spacingPx.xs
+                  paddingVertical: 2, // spacingPx.xxs
+                  borderRadius: 10, // spacingPx.sm
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.15, // shadows.card opacity
+                  shadowRadius: 24,
+                  elevation: 6
+                }}>
+                  <Text style={{ fontSize: 12, fontWeight: '500', color: '#F7F3EA' }}>Verbex Assistant</Text>
+                </View>
+                <View style={{
+                  backgroundColor: '#C7F25B', // neonLime from design spec
+                  paddingHorizontal: 4, // spacingPx.xxs
+                  paddingVertical: 1, // spacingPx.xxs
+                  borderRadius: 8, // spacingPx.xs
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.10, // shadows.card opacity
+                  shadowRadius: 18,
+                  elevation: 4,
+                  transform: [{ rotate: '1deg' }]
+                }}>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: '#0E0D0C' }}>Gasless</Text>
+                </View>
+              </View>
+              
+              <View style={{ flexDirection: 'row', gap: 8, display: width > 768 ? 'flex' : 'none' }}>
+                <TouchableOpacity
+                  onPress={() => router.push('/(voice)')}
+                  style={{
+                    backgroundColor: '#C7F25B', // Buttons.secondary.bg (neonLime)
+                    borderRadius: 24, // Buttons.secondary.size.radiusPx
+                    paddingHorizontal: 18, // Buttons.secondary.size.pxPx
+                    paddingVertical: 10, // Buttons.secondary.size.heightPx / 2
+                    minHeight: 44, // Buttons.secondary.size.heightPx
+                  }}
+                >
+                  <Text style={{ 
+                    fontSize: 12, 
+                    color: '#0E0D0C', // Buttons.secondary.text (ink)
+                    fontWeight: '500' 
+                  }}>
+                    Voice Mode
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{
+                  borderRadius: 8, // spacingPx.xs
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.10)', // border-black/10
+                  backgroundColor: '#F7F3EA', // Card.bg (cream)
+                  paddingHorizontal: 12, // spacingPx.sm
+                  paddingVertical: 4 // spacingPx.xxs
+                }}>
+                  <Text style={{ fontSize: 12, color: '#0E0D0C' }}>Settings</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Messages */}
+            <ScrollView
+              ref={scrollViewRef}
+              style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16 }} // spacingPx.md
+              showsVerticalScrollIndicator={false}
+            >
+              {messages.map((message, index) => (
+                <ChatBubble key={index} role={message.role as 'user' | 'assistant'}>
+                  {message.content}
+                </ChatBubble>
+              ))}
+              {isLoading && (
+                <ChatBubble role="assistant">
+                  <Text style={{ fontStyle: 'italic' }}>Thinking...</Text>
+                </ChatBubble>
+              )}
+            </ScrollView>
+
+            {/* Footer */}
+            <View style={{
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(0,0,0,0.10)', // card shadow opacity
+              paddingHorizontal: 12, // spacingPx.sm
+              paddingVertical: 12 // spacingPx.sm
+            }}>
+              {/* Input bar */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+                gap: 8 // spacingPx.xs
+              }}>
+                <View style={{
+                  flex: 1,
+                  backgroundColor: '#F7F3EA', // Card.bg (cream)
+                  borderWidth: 1,
+                  borderColor: 'rgba(0,0,0,0.08)', // border color
+                  borderRadius: 12, // spacingPx.sm
+                  paddingHorizontal: 12, // spacingPx.sm
+                  paddingVertical: 8, // spacingPx.xs
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 10 },
+                  shadowOpacity: 0.10, // shadows.card opacity
+                  shadowRadius: 30,
+                  elevation: 4
+                }}>
+                  <TextInput
+                    value={input}
+                    onChangeText={setInput}
+                    onSubmitEditing={() => sendMessage()}
+                    placeholder='e.g., Swap 100 AVAX to USDC, then stake the rest'
+                    placeholderTextColor="rgba(0,0,0,0.4)"
+                    style={{
+                      fontSize: 16, // typography.scalesPx.body
+                      color: '#0E0D0C', // ink from design spec
+                      backgroundColor: 'transparent'
+                    }}
+                    multiline
+                  />
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => sendMessage()}
+                  disabled={isLoading}
+                  style={{
+                    backgroundColor: '#2D1B1A', // Buttons.primary.bg (brandPlum)
+                    borderRadius: 28, // Buttons.primary.size.radiusPx
+                    paddingHorizontal: 22, // Buttons.primary.size.pxPx
+                    paddingVertical: 12, // Buttons.primary.size.heightPx / 2
+                    minHeight: 48, // Buttons.primary.size.heightPx
+                  }}
+                >
+                  <Text style={{ 
+                    fontSize: 16, // typography.scalesPx.body
+                    color: '#F7F3EA', // Buttons.primary.text (cream)
+                    fontWeight: '500' 
+                  }}>
+                    Send
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Mobile Voice shortcut */}
+              <View style={{ 
+                alignItems: 'center', 
+                marginTop: 8, // spacingPx.xs
+                display: width <= 768 ? 'flex' : 'none'
+              }}>
+                <TouchableOpacity
+                  onPress={() => router.push('/(voice)')}
+                  style={{
+                    backgroundColor: '#C7F25B', // Buttons.secondary.bg (neonLime)
+                    borderRadius: 24, // Buttons.secondary.size.radiusPx
+                    paddingHorizontal: 18, // Buttons.secondary.size.pxPx
+                    paddingVertical: 10, // Buttons.secondary.size.heightPx / 2
+                    minHeight: 44, // Buttons.secondary.size.heightPx
+                  }}
+                >
+                  <Text style={{ 
+                    fontSize: 12, 
+                    color: '#0E0D0C', // Buttons.secondary.text (ink)
+                    fontWeight: '500' 
+                  }}>
+                    Voice Mode
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0b0b0c',
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#9ca3af',
-    marginTop: 4,
-  },
-  authContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  authText: {
-    fontSize: 18,
-    color: '#9ca3af',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  messagesContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  message: {
-    marginVertical: 8,
-    padding: 12,
-    borderRadius: 12,
-    maxWidth: '80%',
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#2563eb',
-  },
-  assistantMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#374151',
-  },
-  messageText: {
-    color: '#ffffff',
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  timestamp: {
-    color: '#9ca3af',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#1f2937',
-    alignItems: 'flex-end',
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: '#1f2937',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#ffffff',
-    fontSize: 16,
-    maxHeight: 100,
-    borderWidth: 1,
-    borderColor: '#374151',
-  },
-  sendButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginLeft: 12,
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#374151',
-  },
-  sendButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
